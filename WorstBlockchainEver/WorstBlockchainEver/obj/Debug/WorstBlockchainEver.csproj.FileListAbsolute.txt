@@ -7,3 +7,12 @@ C:\Users\ryanfalzon\source\repos\WorstBlockchainEver\WorstBlockchainEver\bin\Deb
 C:\Users\ryanfalzon\source\repos\WorstBlockchainEver\WorstBlockchainEver\bin\Debug\WorstBlockchainEver.pdb
 C:\Users\ryanfalzon\source\repos\WorstBlockchainEver\WorstBlockchainEver\obj\Debug\WorstBlockchainEver.exe
 C:\Users\ryanfalzon\source\repos\WorstBlockchainEver\WorstBlockchainEver\obj\Debug\WorstBlockchainEver.pdb
+C:\Personal.Development\WorstBlockchainEver\WorstBlockchainEver\WorstBlockchainEver\bin\Debug\Resources\SeedNodes.csv
+C:\Personal.Development\WorstBlockchainEver\WorstBlockchainEver\WorstBlockchainEver\bin\Debug\WorstBlockchainEver.exe.config
+C:\Personal.Development\WorstBlockchainEver\WorstBlockchainEver\WorstBlockchainEver\bin\Debug\WorstBlockchainEver.exe
+C:\Personal.Development\WorstBlockchainEver\WorstBlockchainEver\WorstBlockchainEver\bin\Debug\WorstBlockchainEver.pdb
+C:\Personal.Development\WorstBlockchainEver\WorstBlockchainEver\WorstBlockchainEver\obj\Debug\WorstBlockchainEver.csprojAssemblyReference.cache
+C:\Personal.Development\WorstBlockchainEver\WorstBlockchainEver\WorstBlockchainEver\obj\Debug\WorstBlockchainEver.Properties.Resources.resources
+C:\Personal.Development\WorstBlockchainEver\WorstBlockchainEver\WorstBlockchainEver\obj\Debug\WorstBlockchainEver.csproj.GenerateResource.cache
+C:\Personal.Development\WorstBlockchainEver\WorstBlockchainEver\WorstBlockchainEver\obj\Debug\WorstBlockchainEver.exe
+C:\Personal.Development\WorstBlockchainEver\WorstBlockchainEver\WorstBlockchainEver\obj\Debug\WorstBlockchainEver.pdb
