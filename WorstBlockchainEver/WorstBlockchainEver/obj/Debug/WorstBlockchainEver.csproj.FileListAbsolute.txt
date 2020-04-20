@@ -16,3 +16,12 @@ C:\Personal.Development\WorstBlockchainEver\WorstBlockchainEver\WorstBlockchainE
 C:\Personal.Development\WorstBlockchainEver\WorstBlockchainEver\WorstBlockchainEver\obj\Debug\WorstBlockchainEver.csproj.GenerateResource.cache
 C:\Personal.Development\WorstBlockchainEver\WorstBlockchainEver\WorstBlockchainEver\obj\Debug\WorstBlockchainEver.exe
 C:\Personal.Development\WorstBlockchainEver\WorstBlockchainEver\WorstBlockchainEver\obj\Debug\WorstBlockchainEver.pdb
+C:\Users\music\OneDrive\University\Masters\DLT5400 - DLT Implementations and Internals\Tutorials\WorstBlockchainEver\WorstBlockchainEver\WorstBlockchainEver\bin\Debug\Resources\SeedNodes.csv
+C:\Users\music\OneDrive\University\Masters\DLT5400 - DLT Implementations and Internals\Tutorials\WorstBlockchainEver\WorstBlockchainEver\WorstBlockchainEver\bin\Debug\WorstBlockchainEver.exe.config
+C:\Users\music\OneDrive\University\Masters\DLT5400 - DLT Implementations and Internals\Tutorials\WorstBlockchainEver\WorstBlockchainEver\WorstBlockchainEver\bin\Debug\WorstBlockchainEver.exe
+C:\Users\music\OneDrive\University\Masters\DLT5400 - DLT Implementations and Internals\Tutorials\WorstBlockchainEver\WorstBlockchainEver\WorstBlockchainEver\bin\Debug\WorstBlockchainEver.pdb
+C:\Users\music\OneDrive\University\Masters\DLT5400 - DLT Implementations and Internals\Tutorials\WorstBlockchainEver\WorstBlockchainEver\WorstBlockchainEver\obj\Debug\WorstBlockchainEver.csprojAssemblyReference.cache
+C:\Users\music\OneDrive\University\Masters\DLT5400 - DLT Implementations and Internals\Tutorials\WorstBlockchainEver\WorstBlockchainEver\WorstBlockchainEver\obj\Debug\WorstBlockchainEver.Properties.Resources.resources
+C:\Users\music\OneDrive\University\Masters\DLT5400 - DLT Implementations and Internals\Tutorials\WorstBlockchainEver\WorstBlockchainEver\WorstBlockchainEver\obj\Debug\WorstBlockchainEver.csproj.GenerateResource.cache
+C:\Users\music\OneDrive\University\Masters\DLT5400 - DLT Implementations and Internals\Tutorials\WorstBlockchainEver\WorstBlockchainEver\WorstBlockchainEver\obj\Debug\WorstBlockchainEver.exe
+C:\Users\music\OneDrive\University\Masters\DLT5400 - DLT Implementations and Internals\Tutorials\WorstBlockchainEver\WorstBlockchainEver\WorstBlockchainEver\obj\Debug\WorstBlockchainEver.pdb

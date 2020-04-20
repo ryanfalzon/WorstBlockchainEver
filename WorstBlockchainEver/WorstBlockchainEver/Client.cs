@@ -19,32 +19,39 @@ namespace WorstBlockchainEver
         {
             Tools.Log($"Setting up client on {args[0]}:{args[1]} for user {args[2]}...");
 
+            Client.User = args[2];
+
+            // Create peer list for this client and initialize them
             Client.Peers = new Peers(new Node()
             {
                 IPAddress = IPAddress.Parse(args[0]),
                 Port = Convert.ToInt32(args[1])
             });
-
             Client.Peers.InitPeers();
 
+            // Create new state for this client
             Client.State = new State();
 
-            Client.State.Synchronize();
-
+            // Open a new thread to process incoming messages
             Task processIncomingMessages = Task.Factory.StartNew(() =>
             {
                 Client.Peers.ProcessIncomingMessages();
             });
 
+            // Open a new thread to schedule a next synchronize call
             Task scheduleNextSyncTest = Task.Factory.StartNew(() =>
             {
                 ScheduleNextSyncTest(Client.Peers);
             });
 
+            // Open a new thread to handle the user action in the console
             Task userActions = Task.Factory.StartNew(() =>
             {
                 HandleUserActions();
             });
+
+            // Sync node with other nodes in the network
+            Client.State.Synchronize();
 
             Task.WaitAll(processIncomingMessages, scheduleNextSyncTest, userActions);
 
@@ -71,7 +78,7 @@ namespace WorstBlockchainEver
             {
                 keyInfo = Console.ReadKey(true);
 
-                if(keyInfo.Key == ConsoleKey.C)
+                if (keyInfo.Key == ConsoleKey.C)
                 {
                     Console.WriteLine("Actions");
                     Console.WriteLine("-------");
@@ -106,7 +113,7 @@ namespace WorstBlockchainEver
             {
                 Number = Convert.ToUInt16(State.Transactions.Count + 1),
                 Time = Tools.GetUnixTimestamp(DateTime.Now),
-                From = User,
+                From = Client.User,
                 To = to
             });
         }

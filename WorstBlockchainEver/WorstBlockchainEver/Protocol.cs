@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading;
 using WorstBlockchainEver.Helper;
 using WorstBlockchainEver.Models;
 
@@ -56,10 +57,10 @@ namespace WorstBlockchainEver
                     }
             }
 
-            return Tools.Encode(0x02)
-                .Append(Convert.ToByte(commandBytes.Length))
+            return Tools.Encode("2")
+                .Append((byte)commandBytes.Length)
                 .Concat(commandBytes)
-                .Concat(Tools.Encode(0x03))
+                .Concat(Tools.Encode("3"))
                 .ToArray();
         }
 
@@ -70,17 +71,17 @@ namespace WorstBlockchainEver
 
             try
             {
-                if(Tools.DecodeUInt16(dataToProcess.GetRange(index, 1).ToArray()) == 0x02)
+                if(Tools.DecodeString(dataToProcess.GetRange(index, 1).ToArray()).Equals("2"))
                 {
                     index++;
 
-                    var commandLength = Tools.DecodeUInt16(dataToProcess.GetRange(0, 1).ToArray());
+                    var commandLength = (int)dataToProcess.GetRange(index, 1).FirstOrDefault();
                     index++;
 
                     var command = dataToProcess.GetRange(index, commandLength);
                     index += commandLength;
 
-                    if(Tools.DecodeUInt16(dataToProcess.GetRange(index, 1).ToArray()) == 0x03)
+                    if(Tools.DecodeString(dataToProcess.GetRange(index, 1).ToArray()).Equals("3"))
                     {
 
                         switch(Tools.DecodeString(command.GetRange(0, 1).ToArray()))
@@ -175,8 +176,8 @@ namespace WorstBlockchainEver
                     var number = Tools.DecodeUInt16(dataToProcess.GetRange(index, 2).ToArray());
                     index += 2;
 
-                    var time = Tools.DecodeInt64(dataToProcess.GetRange(index, 4).ToArray());
-                    index += 4;
+                    var time = Tools.DecodeInt64(dataToProcess.GetRange(index, 8).ToArray());
+                    index += 8;
 
                     var from = Tools.DecodeString(dataToProcess.GetRange(index, 2).ToArray());
                     index += 2;
@@ -192,15 +193,18 @@ namespace WorstBlockchainEver
                         To = to
                     });
 
+                    Client.Peers.BroadcastMessage(Protocol.CreateMessage(Commands.Ok));
                     return true;
                 }
                 else
                 {
+                    Client.Peers.BroadcastMessage(Protocol.CreateMessage(Commands.NotOk));
                     return false;
                 }
             }
             catch
             {
+                Client.Peers.BroadcastMessage(Protocol.CreateMessage(Commands.NotOk));
                 return false;
             }
         }
@@ -216,7 +220,7 @@ namespace WorstBlockchainEver
                 {
                     index++;
 
-                    Client.Peers.BroadcastMessage(Protocol.CreateMessage(Commands.HighestTransactionResult, new string[] { State.Transactions.Count.ToString() }));
+                    Client.Peers.BroadcastMessage(Protocol.CreateMessage(Commands.HighestTransactionResult, new string[] { Client.State.Transactions.Count.ToString() }));
                     return true;
                 }
                 else
@@ -241,14 +245,28 @@ namespace WorstBlockchainEver
                 {
                     index++;
 
+                    // Assume that current node is not synced
+                    Client.State.Synchronized = false;
+
+                    // Check if highest transaction number that node sent is bigger than the number we have stored in memory
                     var highestTransaction = Tools.DecodeUInt16(dataToProcess.GetRange(index, 2).ToArray());
-                    if(highestTransaction > State.Transactions.Count)
+                    if(highestTransaction > Client.State.Transactions.Count)
                     {
-                        for(int i = State.Transactions.Count; i <= highestTransaction; i++)
+                        // Set the syncing state to true
+                        Client.State.Syncing = true;
+
+                        // Get all transactions that are not present locally by asking other nodes for them
+                        for (int i = Client.State.Transactions.Count; i <= highestTransaction; i++)
                         {
                             Client.Peers.BroadcastMessage(Protocol.CreateMessage(Commands.GetTransaction, new string[] { i.ToString() }));
                         }
+
+                        // Set the syncing state to false
+                        Client.State.Syncing = false;
                     }
+
+                    // At this point node is synced
+                    Client.State.Synchronized = true;
 
                     return true;
                 }
@@ -274,11 +292,14 @@ namespace WorstBlockchainEver
                 {
                     index++;
 
+                    // Extract requested transaction number from the message
                     var number = Tools.DecodeUInt16(dataToProcess.GetRange(index, 2).ToArray());
 
-                    var transaction = State.Transactions.Where(t => t.Number == number).FirstOrDefault();
+                    // Check if we have the transaction being requested
+                    var transaction = Client.State.Transactions.Where(t => t.Number == number).FirstOrDefault();
                     if(transaction != null)
                     {
+                        // If the transaction exists, then broadcast it to the network
                         Client.Peers.BroadcastMessage(Protocol.CreateMessage(Commands.NewTransaction, new string[]
                         {
                             transaction.Number.ToString(),

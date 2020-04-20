@@ -12,13 +12,15 @@ namespace WorstBlockchainEver
 {
     public class Peers : IPeers
     {
-        private readonly Node Me;
-        private readonly List<Node> Nodes;
+        public readonly Node Me;
+        public readonly List<Node> Nodes;
+        public Dictionary<int, bool> NodeSyncStatus;
 
         public Peers(Node me)
         {
             this.Me = me;
             this.Nodes = new List<Node>();
+            this.NodeSyncStatus = new Dictionary<int, bool>();
         }
 
         public void InitPeers()
@@ -39,6 +41,7 @@ namespace WorstBlockchainEver
                     parser.ReadLine();
                 }
 
+                int idCounter = 0;
                 while (!parser.EndOfData)
                 {
                     var fields = parser.ReadFields();
@@ -49,9 +52,13 @@ namespace WorstBlockchainEver
                     {
                         this.Nodes.Add(new Node()
                         {
+                            Id = idCounter,
                             IPAddress = ipAddress,
                             Port = port
                         });
+                        this.NodeSyncStatus.Add(idCounter, false);
+
+                        idCounter++;
                     }
                 }
             }
@@ -64,28 +71,28 @@ namespace WorstBlockchainEver
 
         public void BroadcastMessage(byte[] message)
         {
-            foreach (var node in this.Nodes)
+            using (var client = new UdpClient())
             {
-                try
+                foreach (var node in this.Nodes)
                 {
-                    using (var client = new UdpClient())
+                    try
                     {
                         IPEndPoint endpoint = new IPEndPoint(node.IPAddress, node.Port);
                         client.Connect(endpoint);
                         client.Send(message, message.Length);
                     }
-                }
-                catch(Exception e)
-                {
-                    Tools.Log($"Error occured while broadcasting message to {node.IPAddress}:{node.Port}...");
-                    Tools.Log($"{e.Message}");
+                    catch (Exception e)
+                    {
+                        Tools.Log($"Error occured while broadcasting message to {node.IPAddress}:{node.Port}...");
+                        Tools.Log($"{e.Message}");
+                    }
                 }
             }
         }
 
         public void ProcessIncomingMessages()
         {
-            using(UdpClient server = new UdpClient(this.Me.Port))
+            using (UdpClient server = new UdpClient(this.Me.Port))
             {
                 IPEndPoint listenEndPoint = new IPEndPoint(IPAddress.Any, this.Me.Port);
                 while (true)
