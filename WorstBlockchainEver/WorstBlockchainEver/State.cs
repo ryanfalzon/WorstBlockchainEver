@@ -9,10 +9,6 @@ namespace WorstBlockchainEver
 {
     public class State
     {
-        //public bool Synchronized { get; set; }
-
-        //public bool Syncing { get; set; }
-
         public States CurrentState { get; set; }
 
         public List<Transaction> Transactions{ get; set; }
@@ -27,50 +23,10 @@ namespace WorstBlockchainEver
             this.SyncCounter = 0;
         }
 
-        //public void Synchronize()
-        //{
-        //    Thread.Sleep(5000);
-
-        //    // Set current state to syncing
-        //    this.SyncCounter = 0;
-        //    this.CurrentState = States.Syncing;
-
-        //    // Broadcast message to get the highest transaction number that the other nodes have
-        //    Client.Peers.BroadcastMessage(Protocol.CreateMessage(Commands.HighestTransaction));
-
-        //    // Wait until this node is synced with all other nodes
-        //    while (true)
-        //    {
-        //        if (this.CurrentState == States.Synchronized && this.SyncCounter == Client.Peers.Nodes.Count)
-        //        {
-        //            // Node has synced successfully
-        //            Tools.Log("Node synced successfully!");
-
-        //            // Set current state to synchronized
-        //            this.CurrentState = States.Synchronized;
-        //            break;
-        //        }
-        //        else
-        //        {
-        //            // Node is still syncing
-        //            Tools.Log("Syncing...");
-        //            Thread.Sleep(1000);
-        //        }
-        //    }
-
-        //    // Award 10WBE
-        //    Thread.Sleep(Tools.GenerateAwaitTime(1000, 10000));
-        //    for(int i = 0; i < 10; i++)
-        //    {
-        //        this.AddLocalTransaction(new Transaction()
-        //        {
-        //            Number = Convert.ToUInt16(this.Transactions.Count + 1),
-        //            Time = Tools.GetUnixTimestamp(DateTime.Now),
-        //            From = "0x",
-        //            To = Client.User
-        //        });
-        //    }
-        //}
+        public bool IsSynced()
+        {
+            return this.Transactions.Count == this.NetworkTransactionCount;
+        }
 
         public void Synchronize()
         {
@@ -80,21 +36,24 @@ namespace WorstBlockchainEver
                 this.GetTransaction((ushort)i);
             }
 
-            this.CurrentState = States.Synchronized;
+            // Wait until all transaction have been received
+            while(this.Transactions.Count != this.NetworkTransactionCount)
+            {
+                Thread.Sleep(1000);
+            }
         }
 
         public void GetTransaction(ushort number)
         {
+            Tools.Log($"Requesting transaction with number {number} from network...");
             Client.Peers.BroadcastMessage(Protocol.CreateMessage(Commands.GetTransaction, new string[] { number.ToString() }));
         }
 
         public void AddLocalTransaction(Transaction transaction)
         {
-            //Node needs to be in a synchronized state to continue
+            // Node needs to be in a synchronized state to continue
             while (this.CurrentState != States.Synchronized)
             {
-                Console.WriteLine(this.CurrentState);
-
                 Thread.Sleep(1000);
             }
 
@@ -124,17 +83,11 @@ namespace WorstBlockchainEver
             }
 
             // Set current state to synchronized
-            this.CurrentState = this.SyncCounter == Client.Peers.Nodes.Count ? States.Synchronized : this.CurrentState;
+            this.CurrentState = States.Synchronized;
         }
 
         public void AddNetworkTransaction(Transaction transaction)
         {
-            //Node cannot be in SendingTransaction state
-            while (Client.State.CurrentState == States.SendingTransaction)
-            {
-                Thread.Sleep(1000);
-            }
-
             Tools.Log($"New transaction with number {transaction.Number} received...");
 
             // Check if transaction with same number exists in the local transaction chain

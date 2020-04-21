@@ -138,7 +138,6 @@ namespace WorstBlockchainEver
 
         private static byte[] CreateHighestTransactionMessage()
         {
-            Console.WriteLine("DAHAL HAWN");
             return Tools.Encode("h");
         }
 
@@ -258,22 +257,32 @@ namespace WorstBlockchainEver
 
             try
             {
-                // Firt byte of the command should be a byte representation of an ASCII 'm'
-                if (Tools.DecodeString(dataToProcess.GetRange(index, 1).ToArray()).Equals("m"))
+                if(Client.State.CurrentState == States.Syncing || (Client.State.SyncCounter == 0 && Client.State.CurrentState == States.InitializingSyncProcess))
                 {
-                    index++;
-                    var highestTransaction = Tools.DecodeUInt16(dataToProcess.GetRange(index, 2).ToArray());
+                    // Firt byte of the command should be a byte representation of an ASCII 'm'
+                    if (Tools.DecodeString(dataToProcess.GetRange(index, 1).ToArray()).Equals("m"))
+                    {
+                        index++;
+                        var highestTransaction = Tools.DecodeUInt16(dataToProcess.GetRange(index, 2).ToArray());
 
-                    Client.State.SyncCounter += 1;
-                    Client.State.NetworkTransactionCount = Client.State.NetworkTransactionCount < highestTransaction ? highestTransaction : Client.State.NetworkTransactionCount;
-                    Client.State.CurrentState = Client.State.SyncCounter == Client.Peers.Nodes.Count ? States.NotSynchronized : Client.State.CurrentState;
-                    return true;
+                        Client.State.SyncCounter += 1;
+                        Client.State.NetworkTransactionCount = Client.State.NetworkTransactionCount < highestTransaction ? highestTransaction : Client.State.NetworkTransactionCount;
+
+                        // First check if all other nodes has sent their response
+                        if(Client.State.SyncCounter == Client.Peers.Nodes.Count)
+                        {
+                            Client.State.CurrentState = Client.State.IsSynced() ? States.Synchronized : States.NotSynchronized;
+                        }
+                        return true;
+                    }
+                    else
+                    {
+                        Tools.Log("Command does not start with an ASCII 'm'!");
+                        return false;
+                    }
                 }
-                else
-                {
-                    Tools.Log("Command does not start with an ASCII 'm'!");
-                    return false;
-                }
+
+                return false;
             }
             catch(Exception e)
             {

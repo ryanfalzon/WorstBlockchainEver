@@ -33,6 +33,7 @@ namespace WorstBlockchainEver
 
             // Create new state for this client
             Client.State = new State();
+            Client.State.CurrentState = States.Synchronized;
 
             // Open a new thread to process incoming messages
             Task processIncomingMessages = Task.Factory.StartNew(() =>
@@ -52,25 +53,17 @@ namespace WorstBlockchainEver
                 HandleUserActions();
             });
 
-            Task award = Task.Factory.StartNew(() =>
-            {
-                Award();
-            });
-
-            // Sync node with other nodes in the network
-            //Client.State.Synchronize();
-
-
-
-            Task.WaitAll(processIncomingMessages, scheduleNextSyncTest, userActions);
+            AwardWbe();
 
             Tools.Log($"Client setup completed!");
+
+            Task.WaitAll(processIncomingMessages, scheduleNextSyncTest, userActions);
         }
 
-        public static void Award()
+        public static void AwardWbe()
         {
-            // Award 10WBE
-            Thread.Sleep(Tools.GenerateAwaitTime(1000, 30000));
+            Thread.Sleep(Tools.GenerateAwaitTime(1000, 10000));
+
             for (int i = 0; i < 10; i++)
             {
                 State.AddLocalTransaction(new Transaction()
@@ -85,30 +78,43 @@ namespace WorstBlockchainEver
 
         public static void ScheduleNextSyncTest(Peers peers)
         {
+            Thread.Sleep(Tools.GenerateAwaitTime(1000, 5000));
             while (true)
             {
-                Tools.Log($"Checking highest transaction in network in 5000ms...");
-                Thread.Sleep(5000);
+                // Node needs to be in Synchronized state
+                while(State.CurrentState != States.Synchronized)
+                {
+                    Thread.Sleep(1000);
+                }
 
                 // Request highest transaction number from the network
+                Tools.Log("Sync process initializing...");
                 peers.BroadcastMessage(Protocol.CreateMessage(Commands.HighestTransaction));
+                State.SyncCounter = 0;
+                State.CurrentState = States.InitializingSyncProcess;
 
-                // Node needs to be removed from syncing state to continue
-                while (State.CurrentState == States.Syncing)
+                // Node needs to be removed from the InitializingSyncProcess or Syncing state to continue
+                while (State.CurrentState == States.InitializingSyncProcess || State.CurrentState == States.Syncing)
                 {
                     Tools.Log("Syncing...");
                     Thread.Sleep(1000);
                 }
 
+                // If state is not synchronized, then we will request the missing transactions
                 if(State.CurrentState == States.NotSynchronized)
                 {
                     Tools.Log("Node is not synced! Requesting transactions...");
+                    State.CurrentState = States.AwaitingTransactions;
                     State.Synchronize();
+                    State.CurrentState = States.Synchronized;
                 }
                 else
                 {
                     Tools.Log("Node synced successfully!");
                 }
+
+                Tools.Log($"Next sync process will occur in {Properties.Settings.Default.SyncDelay}...");
+                Thread.Sleep(Properties.Settings.Default.SyncDelay);
             }
         }
 
@@ -129,7 +135,8 @@ namespace WorstBlockchainEver
                     Console.WriteLine("Actions");
                     Console.WriteLine("-------");
                     Console.WriteLine("1) Check Balance");
-                    Console.WriteLine("2) Send WBE\n");
+                    Console.WriteLine("2) Send WBE");
+                    Console.WriteLine("3) Exii\n");
                     Console.Write("Choice: ");
 
                     var choice = Convert.ToInt32(Console.ReadLine());
@@ -138,6 +145,7 @@ namespace WorstBlockchainEver
                     {
                         case 1: CheckBalance(); break;
                         case 2: SendWBE(); break;
+                        case 3: Environment.Exit(0); break;
                         default: Console.WriteLine("Invalid Entry..."); break;
                     }
 

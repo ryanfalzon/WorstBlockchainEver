@@ -1,21 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace WorstBlockchainEver.Models
+﻿namespace WorstBlockchainEver.Models
 {
     public enum States
     {
-        Syncing,
+        InitializingSyncProcess,    // The node will go in this state when a message for the highest transaction is broadcasted
 
-        Synchronized,
+        Syncing,                    // The node will be in this state until all seed nodes respond back with the highest transaction
 
-        NotSynchronized,
+        Synchronized,               // The node will be in this state if the local transaction count matches that of the network
 
-        AwaitingTransactions,
+        NotSynchronized,            // The node will be in this state if the local transaction count does not match that of the network
 
-        SendingTransactions
+        AwaitingTransactions,       // The node will be in this state until the local transaction count matches that of the network
+
+        SendingTransaction          // The node will be in this state while it is sending a new transaction to the network
+
+        // Possible state transitions:
+        // Synchronized => InitializingSyncProcess => Syncing => NotSynchronized => AwaitingTransactions => Synchronized
+        // Synchronized => InitializingSyncProcess => Syncing => Synchronized
+        // Synchronized => SendingTransaction => Synchronized
+        // Synchronized => AwaitingTransactions => Synchronized
     }
 }
