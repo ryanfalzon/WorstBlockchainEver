@@ -44,6 +44,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Models\States.cs" />
     <Compile Include="Peers.cs" />
     <Compile Include="Interfaces\IPeers.cs" />
     <Compile Include="Models\Commands.cs" />

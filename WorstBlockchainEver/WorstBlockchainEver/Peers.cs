@@ -13,7 +13,9 @@ namespace WorstBlockchainEver
     public class Peers : IPeers
     {
         public readonly Node Me;
+
         public readonly List<Node> Nodes;
+
         public Dictionary<int, bool> NodeSyncStatus;
 
         public Peers(Node me)
@@ -98,7 +100,12 @@ namespace WorstBlockchainEver
                 while (true)
                 {
                     byte[] receivedData = server.Receive(ref listenEndPoint);
-                    Protocol.ProcessMessage(receivedData);
+
+                    // Try and process the message and if it fails log an error
+                    if (!Protocol.ProcessMessage(receivedData))
+                    {
+                        Tools.Log("An error has occured while proessing received message");
+                    }
                 }
             }
         }

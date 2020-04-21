@@ -1,0 +1,2 @@
+cd "C:\Users\music\OneDrive\University\Masters\DLT5400 - DLT Implementations and Internals\Tutorials\WorstBlockchainEver\WorstBlockchainEver\WorstBlockchainEver\bin\Debug"
+WorstBlockchainEver.exe "127.0.0.1" "1501" "KB"

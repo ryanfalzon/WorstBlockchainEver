@@ -17,6 +17,8 @@ namespace WorstBlockchainEver
 
         public static void Main(string[] args)
         {
+            Tools.AllowLogs = true;
+
             Tools.Log($"Setting up client on {args[0]}:{args[1]} for user {args[2]}...");
 
             Client.User = args[2];
@@ -50,12 +52,35 @@ namespace WorstBlockchainEver
                 HandleUserActions();
             });
 
+            Task award = Task.Factory.StartNew(() =>
+            {
+                Award();
+            });
+
             // Sync node with other nodes in the network
-            Client.State.Synchronize();
+            //Client.State.Synchronize();
+
+
 
             Task.WaitAll(processIncomingMessages, scheduleNextSyncTest, userActions);
 
             Tools.Log($"Client setup completed!");
+        }
+
+        public static void Award()
+        {
+            // Award 10WBE
+            Thread.Sleep(Tools.GenerateAwaitTime(1000, 30000));
+            for (int i = 0; i < 10; i++)
+            {
+                State.AddLocalTransaction(new Transaction()
+                {
+                    Number = Convert.ToUInt16(State.Transactions.Count + 1),
+                    Time = Tools.GetUnixTimestamp(DateTime.Now),
+                    From = "0x",
+                    To = User
+                });
+            }
         }
 
         public static void ScheduleNextSyncTest(Peers peers)
@@ -64,7 +89,26 @@ namespace WorstBlockchainEver
             {
                 Tools.Log($"Checking highest transaction in network in 5000ms...");
                 Thread.Sleep(5000);
+
+                // Request highest transaction number from the network
                 peers.BroadcastMessage(Protocol.CreateMessage(Commands.HighestTransaction));
+
+                // Node needs to be removed from syncing state to continue
+                while (State.CurrentState == States.Syncing)
+                {
+                    Tools.Log("Syncing...");
+                    Thread.Sleep(1000);
+                }
+
+                if(State.CurrentState == States.NotSynchronized)
+                {
+                    Tools.Log("Node is not synced! Requesting transactions...");
+                    State.Synchronize();
+                }
+                else
+                {
+                    Tools.Log("Node synced successfully!");
+                }
             }
         }
 
@@ -80,6 +124,8 @@ namespace WorstBlockchainEver
 
                 if (keyInfo.Key == ConsoleKey.C)
                 {
+                    Tools.AllowLogs = false;
+
                     Console.WriteLine("Actions");
                     Console.WriteLine("-------");
                     Console.WriteLine("1) Check Balance");
@@ -94,6 +140,8 @@ namespace WorstBlockchainEver
                         case 2: SendWBE(); break;
                         default: Console.WriteLine("Invalid Entry..."); break;
                     }
+
+                    Tools.AllowLogs = true;
                 }
             }
         }
@@ -102,13 +150,16 @@ namespace WorstBlockchainEver
         {
             Console.Write("Enter user initials: ");
             string user = Console.ReadLine();
-            Tools.Log($"Balance for user {user}: {State.CheckBalance(user)}");
+            Tools.Log($"Balance for user {user}: {State.CheckBalance(user)}", true);
         }
 
         private static void SendWBE()
         {
             Console.Write("Enter user initials: ");
             string to = Console.ReadLine();
+
+            Tools.AllowLogs = true;
+
             State.AddLocalTransaction(new Transaction()
             {
                 Number = Convert.ToUInt16(State.Transactions.Count + 1),

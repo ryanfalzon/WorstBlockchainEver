@@ -12,6 +12,7 @@ namespace WorstBlockchainEver
         {
             byte[] commandBytes = null;
 
+            // Construct the command byte array by using the passed enum command
             switch (command)
             {
                 case Commands.NewTransaction:
@@ -57,6 +58,7 @@ namespace WorstBlockchainEver
                     }
             }
 
+            // Return the whole message byte array
             return Tools.Encode("2")
                 .Append((byte)commandBytes.Length)
                 .Concat(commandBytes)
@@ -71,6 +73,7 @@ namespace WorstBlockchainEver
 
             try
             {
+                // First byte of the message should be an STX byte representation
                 if(Tools.DecodeString(dataToProcess.GetRange(index, 1).ToArray()).Equals("2"))
                 {
                     index++;
@@ -81,9 +84,10 @@ namespace WorstBlockchainEver
                     var command = dataToProcess.GetRange(index, commandLength);
                     index += commandLength;
 
+                    // Last byte of the message should be an ETX byte representation
                     if(Tools.DecodeString(dataToProcess.GetRange(index, 1).ToArray()).Equals("3"))
                     {
-
+                        // Decode the first element of the command byte array to deduce what command it is
                         switch(Tools.DecodeString(command.GetRange(0, 1).ToArray()))
                         {
                             case "n": return ProcessNewTransactionMessage(command.ToArray());
@@ -103,16 +107,19 @@ namespace WorstBlockchainEver
                     }
                     else
                     {
+                        Tools.Log("Message does not end with an ETX byte representation!");
                         return false;
                     }
                 }
                 else
                 {
+                    Tools.Log("Message does not start with an STX byte representation!");
                     return false;
                 }
             }
-            catch
+            catch(Exception e)
             {
+                Tools.Log(e.Message);
                 return false;
             }
         }
@@ -131,6 +138,7 @@ namespace WorstBlockchainEver
 
         private static byte[] CreateHighestTransactionMessage()
         {
+            Console.WriteLine("DAHAL HAWN");
             return Tools.Encode("h");
         }
 
@@ -169,6 +177,7 @@ namespace WorstBlockchainEver
 
             try
             {
+                // Firt byte of the command should be a byte representation of an ASCII 'n'
                 if (Tools.DecodeString(dataToProcess.GetRange(index, 1).ToArray()).Equals("n"))
                 {
                     index++;
@@ -185,6 +194,7 @@ namespace WorstBlockchainEver
                     var to = Tools.DecodeString(dataToProcess.GetRange(index, 2).ToArray());
                     index += 2;
 
+                    // Add transaction to local transaction chain
                     Client.State.AddNetworkTransaction(new Transaction()
                     {
                         Number = number,
@@ -193,18 +203,21 @@ namespace WorstBlockchainEver
                         To = to
                     });
 
+                    // Broadcast an ok message
                     Client.Peers.BroadcastMessage(Protocol.CreateMessage(Commands.Ok));
                     return true;
                 }
                 else
                 {
                     Client.Peers.BroadcastMessage(Protocol.CreateMessage(Commands.NotOk));
+                    Tools.Log("Command does not start with an ASCII 'n'!");
                     return false;
                 }
             }
-            catch
+            catch(Exception e)
             {
                 Client.Peers.BroadcastMessage(Protocol.CreateMessage(Commands.NotOk));
+                Tools.Log(e.Message);
                 return false;
             }
         }
@@ -216,20 +229,24 @@ namespace WorstBlockchainEver
 
             try
             {
+                // Firt byte of the command should be a byte representation of an ASCII 'h'
                 if (Tools.DecodeString(dataToProcess.GetRange(index, 1).ToArray()).Equals("h"))
                 {
                     index++;
 
-                    Client.Peers.BroadcastMessage(Protocol.CreateMessage(Commands.HighestTransactionResult, new string[] { Client.State.Transactions.Count.ToString() }));
+                    // If there are no transactions return 0, otherwise return the last transaction's id
+                    Client.Peers.BroadcastMessage(Protocol.CreateMessage(Commands.HighestTransactionResult, new string[] { Client.State.Transactions.Count > 0 ? Client.State.Transactions.Last().Number.ToString() : "0" }));
                     return true;
                 }
                 else
                 {
+                    Tools.Log("Command does not start with an ASCII 'h'!");
                     return false;
                 }
             }
-            catch
+            catch(Exception e)
             {
+                Tools.Log(e.Message);
                 return false;
             }
         }
@@ -241,42 +258,26 @@ namespace WorstBlockchainEver
 
             try
             {
+                // Firt byte of the command should be a byte representation of an ASCII 'm'
                 if (Tools.DecodeString(dataToProcess.GetRange(index, 1).ToArray()).Equals("m"))
                 {
                     index++;
-
-                    // Assume that current node is not synced
-                    Client.State.Synchronized = false;
-
-                    // Check if highest transaction number that node sent is bigger than the number we have stored in memory
                     var highestTransaction = Tools.DecodeUInt16(dataToProcess.GetRange(index, 2).ToArray());
-                    if(highestTransaction > Client.State.Transactions.Count)
-                    {
-                        // Set the syncing state to true
-                        Client.State.Syncing = true;
 
-                        // Get all transactions that are not present locally by asking other nodes for them
-                        for (int i = Client.State.Transactions.Count; i <= highestTransaction; i++)
-                        {
-                            Client.Peers.BroadcastMessage(Protocol.CreateMessage(Commands.GetTransaction, new string[] { i.ToString() }));
-                        }
-
-                        // Set the syncing state to false
-                        Client.State.Syncing = false;
-                    }
-
-                    // At this point node is synced
-                    Client.State.Synchronized = true;
-
+                    Client.State.SyncCounter += 1;
+                    Client.State.NetworkTransactionCount = Client.State.NetworkTransactionCount < highestTransaction ? highestTransaction : Client.State.NetworkTransactionCount;
+                    Client.State.CurrentState = Client.State.SyncCounter == Client.Peers.Nodes.Count ? States.NotSynchronized : Client.State.CurrentState;
                     return true;
                 }
                 else
                 {
+                    Tools.Log("Command does not start with an ASCII 'm'!");
                     return false;
                 }
             }
-            catch
+            catch(Exception e)
             {
+                Tools.Log(e.Message);
                 return false;
             }
         }
@@ -288,7 +289,8 @@ namespace WorstBlockchainEver
 
             try
             {
-                if (Tools.DecodeString(dataToProcess.GetRange(index, 1).ToArray()).Equals("m"))
+                // Firt byte of the command should be a byte representation of an ASCII 'g'
+                if (Tools.DecodeString(dataToProcess.GetRange(index, 1).ToArray()).Equals("g"))
                 {
                     index++;
 
@@ -312,16 +314,19 @@ namespace WorstBlockchainEver
                     }
                     else
                     {
+                        Tools.Log($"Requested transaction with number {number} does not exist in local chain!");
                         return false;
                     }
                 }
                 else
                 {
+                    Tools.Log("Command does not start with an ASCII 'g'!");
                     return false;
                 }
             }
-            catch
+            catch(Exception e)
             {
+                Tools.Log(e.Message);
                 return false;
             }
         }

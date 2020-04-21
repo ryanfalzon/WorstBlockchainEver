@@ -8,6 +8,8 @@ namespace WorstBlockchainEver.Helper
 {
     public static class Tools
     {
+        public static bool AllowLogs { get; set; }
+
         public static byte[] Encode(string data)
         {
             return Encoding.ASCII.GetBytes(data);
@@ -49,9 +51,12 @@ namespace WorstBlockchainEver.Helper
             return new DateTimeOffset(date).ToUnixTimeMilliseconds();
         }
 
-        public static void Log(string message)
+        public static void Log(string message, bool overrideAllowLogs = false)
         {
-            Console.WriteLine($"{DateTime.Now} - {message}");
+            if (AllowLogs || overrideAllowLogs)
+            {
+                Console.WriteLine($"{DateTime.Now} - {message}");
+            }
         }
     }
 }
