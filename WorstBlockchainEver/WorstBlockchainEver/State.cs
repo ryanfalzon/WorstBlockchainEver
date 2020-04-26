@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using WorstBlockchainEver.Helper;
@@ -31,9 +30,13 @@ namespace WorstBlockchainEver
         public void Synchronize()
         {
             // Get all transactions that are not present locally by asking other nodes for them
-            for (int i = this.Transactions.Count; i < this.NetworkTransactionCount; i++)
+            for (int i = this.Transactions.Count; i <= this.NetworkTransactionCount; i++)
             {
-                this.GetTransaction((ushort)i);
+                // We do not need transaction with number 0
+                if (i != 0)
+                {
+                    this.GetTransaction((ushort)i);
+                }
             }
 
             // Wait until all transaction have been received
@@ -61,7 +64,7 @@ namespace WorstBlockchainEver
             this.CurrentState = States.SendingTransaction;
 
             // Check if user has sufficient balance or the user is the 0x address
-            if (CheckBalance(transaction.From) >= 1 || transaction.From.Equals("0x"))
+            if (CheckBalance(transaction.From) >= 1 || transaction.From.Equals("00"))
             {
                 Tools.Log($"Creating new transaction with number {transaction.Number}...");
 
@@ -91,13 +94,14 @@ namespace WorstBlockchainEver
             Tools.Log($"New transaction with number {transaction.Number} received...");
 
             // Check if transaction with same number exists in the local transaction chain
-            var transactionExists = this.Transactions.Where(t => t.Number == transaction.Number).FirstOrDefault();
-            if (transactionExists != null)
+            var transactionExists = this.Transactions.Exists(t => t.Number == transaction.Number);
+            if (transactionExists)
             {
                 Tools.Log($"Transaction with number {transaction.Number} already exists...");
+                var existingTransaction = this.Transactions.Where(t => t.Number == transaction.Number).FirstOrDefault();
 
                 // Check if the newly received transaction is older than the one present in local transaction chain
-                if (transaction.Time <= transactionExists.Time)
+                if (transaction.Time <= existingTransaction.Time)
                 {
                     // Replace the newly received transaction with the one already present in local transaction chain
                     Tools.Log($"Transaction received is older...");

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using System.Threading;
 using WorstBlockchainEver.Helper;
 using WorstBlockchainEver.Models;
 
@@ -130,9 +129,9 @@ namespace WorstBlockchainEver
         {
             return Tools.Encode("n")
                 .Concat(Tools.Encode(transaction.Number))
-                .Concat(Tools.Encode(transaction.Time))
                 .Concat(Tools.Encode(transaction.From))
                 .Concat(Tools.Encode(transaction.To))
+                .Concat(Tools.Encode((int)transaction.Time))
                 .ToArray();
         }
 
@@ -184,14 +183,14 @@ namespace WorstBlockchainEver
                     var number = Tools.DecodeUInt16(dataToProcess.GetRange(index, 2).ToArray());
                     index += 2;
 
-                    var time = Tools.DecodeInt64(dataToProcess.GetRange(index, 8).ToArray());
-                    index += 8;
-
                     var from = Tools.DecodeString(dataToProcess.GetRange(index, 2).ToArray());
                     index += 2;
 
                     var to = Tools.DecodeString(dataToProcess.GetRange(index, 2).ToArray());
                     index += 2;
+
+                    var time = Tools.DecodeInt32(dataToProcess.GetRange(index, 4).ToArray());
+                    index += 4;
 
                     // Add transaction to local transaction chain
                     Client.State.AddNetworkTransaction(new Transaction()
@@ -282,7 +281,7 @@ namespace WorstBlockchainEver
                     }
                 }
 
-                return false;
+                return true;
             }
             catch(Exception e)
             {

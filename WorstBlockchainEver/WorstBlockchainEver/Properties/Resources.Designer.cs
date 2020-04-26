@@ -62,12 +62,23 @@ namespace WorstBlockchainEver.Properties {
         
         /// <summary>
         ///   Looks up a localized string similar to IP,Port
-        ///127.0.0.1,1500
-        ///127.0.0.1,1501.
+        ///188.172.79.171,8001.
         /// </summary>
-        internal static string SeedNodes {
+        internal static string LiveSeedNodes {
             get {
-                return ResourceManager.GetString("SeedNodes", resourceCulture);
+                return ResourceManager.GetString("LiveSeedNodes", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to IP,Port
+        ///127.0.0.1,1500
+        ///127.0.0.1,1501
+        ///127.0.0.1,1502.
+        /// </summary>
+        internal static string LocalSeedNodes {
+            get {
+                return ResourceManager.GetString("LocalSeedNodes", resourceCulture);
             }
         }
     }

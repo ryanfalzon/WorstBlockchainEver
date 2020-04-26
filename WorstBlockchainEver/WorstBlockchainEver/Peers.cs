@@ -16,13 +16,10 @@ namespace WorstBlockchainEver
 
         public readonly List<Node> Nodes;
 
-        public Dictionary<int, bool> NodeSyncStatus;
-
         public Peers(Node me)
         {
             this.Me = me;
             this.Nodes = new List<Node>();
-            this.NodeSyncStatus = new Dictionary<int, bool>();
         }
 
         public void InitPeers()
@@ -32,7 +29,7 @@ namespace WorstBlockchainEver
 
         public void LoadSeedNodes()
         {
-            using(StringReader stringReader = new StringReader(Properties.Resources.SeedNodes))
+            using(StringReader stringReader = new StringReader(Properties.Settings.Default.LocalDevelopment ? Properties.Resources.LocalSeedNodes : Properties.Resources.LiveSeedNodes))
             using (TextFieldParser parser = new TextFieldParser(stringReader))
             {
                 parser.TextFieldType = FieldType.Delimited;
@@ -49,8 +46,9 @@ namespace WorstBlockchainEver
                     var fields = parser.ReadFields();
                     var ipAddress = IPAddress.Parse(fields[0]);
                     var port = Convert.ToInt32(fields[1]);
+                    var on = Convert.ToBoolean(fields[2]);
 
-                    if (!this.Me.IPAddress.Equals(ipAddress) || !this.Me.Port.Equals(port))
+                    if (on && (!this.Me.IPAddress.Equals(ipAddress) || !this.Me.Port.Equals(port)))
                     {
                         this.Nodes.Add(new Node()
                         {
@@ -58,7 +56,8 @@ namespace WorstBlockchainEver
                             IPAddress = ipAddress,
                             Port = port
                         });
-                        this.NodeSyncStatus.Add(idCounter, false);
+
+                        Tools.Log($"Found node at {ipAddress}:{port}");
 
                         idCounter++;
                     }

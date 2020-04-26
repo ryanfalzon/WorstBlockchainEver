@@ -31,5 +31,17 @@ namespace WorstBlockchainEver.Properties {
                 return ((int)(this["SyncDelay"]));
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool LocalDevelopment {
+            get {
+                return ((bool)(this["LocalDevelopment"]));
+            }
+            set {
+                this["LocalDevelopment"] = value;
+            }
+        }
     }
 }

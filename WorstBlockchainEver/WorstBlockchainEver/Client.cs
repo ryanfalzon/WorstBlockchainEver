@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
@@ -32,8 +33,10 @@ namespace WorstBlockchainEver
             Client.Peers.InitPeers();
 
             // Create new state for this client
-            Client.State = new State();
-            Client.State.CurrentState = States.Synchronized;
+            Client.State = new State
+            {
+                CurrentState = States.Synchronized
+            };
 
             // Open a new thread to process incoming messages
             Task processIncomingMessages = Task.Factory.StartNew(() =>
@@ -53,26 +56,31 @@ namespace WorstBlockchainEver
                 HandleUserActions();
             });
 
-            AwardWbe();
+            // Open a new thread to award WBE to user
+            Task awardWbe = Task.Factory.StartNew(() =>
+            {
+                AwardWbe();
+            });
 
             Tools.Log($"Client setup completed!");
 
-            Task.WaitAll(processIncomingMessages, scheduleNextSyncTest, userActions);
+            Task.WaitAll(processIncomingMessages, scheduleNextSyncTest, userActions, awardWbe);
         }
 
         public static void AwardWbe()
         {
-            Thread.Sleep(Tools.GenerateAwaitTime(1000, 10000));
-
+            Thread.Sleep(5000);
             for (int i = 0; i < 10; i++)
             {
                 State.AddLocalTransaction(new Transaction()
                 {
                     Number = Convert.ToUInt16(State.Transactions.Count + 1),
                     Time = Tools.GetUnixTimestamp(DateTime.Now),
-                    From = "0x",
+                    From = "00",
                     To = User
                 });
+
+                i++;
             }
         }
 
@@ -168,9 +176,11 @@ namespace WorstBlockchainEver
 
             Tools.AllowLogs = true;
 
+            var transactionNumber = State.Transactions.Count == 0 ? 1 : State.Transactions.Last().Number + 1;
+
             State.AddLocalTransaction(new Transaction()
             {
-                Number = Convert.ToUInt16(State.Transactions.Count + 1),
+                Number = Convert.ToUInt16(transactionNumber),
                 Time = Tools.GetUnixTimestamp(DateTime.Now),
                 From = Client.User,
                 To = to

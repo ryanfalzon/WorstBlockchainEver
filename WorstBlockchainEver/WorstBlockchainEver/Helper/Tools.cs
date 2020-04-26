@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net;
 using System.Text;
 
 namespace WorstBlockchainEver.Helper
@@ -12,14 +13,19 @@ namespace WorstBlockchainEver.Helper
             return Encoding.ASCII.GetBytes(data);
         }
 
+        public static byte[] Encode(int data)
+        {
+            return BitConverter.GetBytes(IPAddress.HostToNetworkOrder(data));
+        }
+
         public static byte[] Encode(long data)
         {
-            return BitConverter.GetBytes(data);
+            return BitConverter.GetBytes(IPAddress.HostToNetworkOrder(data));
         }
 
         public static byte[] Encode(ushort data)
         {
-            return BitConverter.GetBytes(data);
+            return BitConverter.GetBytes(IPAddress.HostToNetworkOrder((short)data));
         }
 
         public static string DecodeString(byte[] data)
@@ -27,14 +33,19 @@ namespace WorstBlockchainEver.Helper
             return Encoding.ASCII.GetString(data);
         }
 
+        public static long DecodeInt32(byte[] data)
+        {
+            return IPAddress.NetworkToHostOrder(BitConverter.ToInt32(data, 0));
+        }
+
         public static long DecodeInt64(byte[] data)
         {
-            return BitConverter.ToInt64(data, 0);
+            return IPAddress.NetworkToHostOrder(BitConverter.ToInt32(data, 0));
         }
         
         public static ushort DecodeUInt16(byte[] data)
         {
-            return BitConverter.ToUInt16(data, 0);
+            return (ushort)IPAddress.NetworkToHostOrder((short)BitConverter.ToUInt16(data, 0));
         }
 
         public static int GenerateAwaitTime(int minimum, int maximum)
@@ -45,7 +56,7 @@ namespace WorstBlockchainEver.Helper
 
         public static long GetUnixTimestamp(DateTime date)
         {
-            return new DateTimeOffset(date).ToUnixTimeMilliseconds();
+            return new DateTimeOffset(date).ToUnixTimeSeconds();
         }
 
         public static void Log(string message, bool overrideAllowLogs = false)
