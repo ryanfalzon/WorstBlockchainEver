@@ -26,3 +26,4 @@ C:\Users\music\OneDrive\University\Masters\DLT5400 - DLT Implementations and Int
 C:\Users\music\OneDrive\University\Masters\DLT5400 - DLT Implementations and Internals\Tutorials\WorstBlockchainEver\WorstBlockchainEver\WorstBlockchainEver\obj\Debug\WorstBlockchainEver.pdb
 C:\Users\music\OneDrive\University\Masters\DLT5400 - DLT Implementations and Internals\Tutorials\WorstBlockchainEver\WorstBlockchainEver\WorstBlockchainEver\bin\Debug\Resources\LiveSeedNodes.csv
 C:\Users\music\OneDrive\University\Masters\DLT5400 - DLT Implementations and Internals\Tutorials\WorstBlockchainEver\WorstBlockchainEver\WorstBlockchainEver\bin\Debug\Resources\LocalSeedNodes.csv
+C:\Users\music\OneDrive\University\Masters\DLT5400 - DLT Implementations and Internals\Tutorials\WorstBlockchainEver\WorstBlockchainEver\WorstBlockchainEver\obj\Debug\WorstBlockchainEver.csproj.CoreCompileInputs.cache

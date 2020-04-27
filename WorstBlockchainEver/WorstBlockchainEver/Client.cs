@@ -77,7 +77,9 @@ namespace WorstBlockchainEver
                     Number = Convert.ToUInt16(State.Transactions.Count + 1),
                     Time = Tools.GetUnixTimestamp(DateTime.Now),
                     From = "00",
-                    To = User
+                    To = User,
+                    Approved = true,
+                    ApproveTransaction = 0
                 });
 
                 i++;
@@ -144,20 +146,32 @@ namespace WorstBlockchainEver
                     Console.WriteLine("-------");
                     Console.WriteLine("1) Check Balance");
                     Console.WriteLine("2) Send WBE");
-                    Console.WriteLine("3) Exii\n");
+                    Console.WriteLine("3) Approve Transaction");
+                    Console.WriteLine("4) Exit\n");
                     Console.Write("Choice: ");
 
-                    var choice = Convert.ToInt32(Console.ReadLine());
-
-                    switch (choice)
+                    try
                     {
-                        case 1: CheckBalance(); break;
-                        case 2: SendWBE(); break;
-                        case 3: Environment.Exit(0); break;
-                        default: Console.WriteLine("Invalid Entry..."); break;
-                    }
+                        var choice = Convert.ToInt32(Console.ReadLine());
 
-                    Tools.AllowLogs = true;
+                        switch (choice)
+                        {
+                            case 1: CheckBalance(); break;
+                            case 2: SendWBE(); break;
+                            case 3: ApproveTransaction(); break;
+                            case 4: Environment.Exit(0); break;
+                            default: Console.WriteLine("Invalid Entry..."); break;
+                        }
+                    }
+                    catch
+                    {
+                        Tools.AllowLogs = true;
+                        Tools.Log("An error occured while parsing choice!");
+                    }
+                    finally
+                    {
+                        Tools.AllowLogs = true;
+                    }
                 }
             }
         }
@@ -174,6 +188,9 @@ namespace WorstBlockchainEver
             Console.Write("Enter user initials: ");
             string to = Console.ReadLine();
 
+            Console.Write("Require Approval? (Y/N): ");
+            bool requireApproval = Console.ReadLine().Equals("Y") ? true : false;
+
             Tools.AllowLogs = true;
 
             var transactionNumber = State.Transactions.Count == 0 ? 1 : State.Transactions.Last().Number + 1;
@@ -183,8 +200,39 @@ namespace WorstBlockchainEver
                 Number = Convert.ToUInt16(transactionNumber),
                 Time = Tools.GetUnixTimestamp(DateTime.Now),
                 From = Client.User,
-                To = to
+                To = to,
+                Approved = !requireApproval,
+                ApproveTransaction = 0
             });
+        }
+
+        private static void ApproveTransaction()
+        {
+            Console.WriteLine("\n-----------------------------------------");
+            Console.WriteLine("The following transactions need approval:");
+            foreach (var transaction in State.TransactionsNotApproved)
+            {
+                Console.WriteLine($"\t- Transaction Number - {transaction.Key} - From - {State.Transactions[transaction.Value].From}");
+            }
+            Console.WriteLine("-----------------------------------------\n");
+
+            Console.Write("\nEnter transaction number: ");
+            ushort transactionNumber = Convert.ToUInt16(Console.ReadLine());
+
+            if (State.TransactionsNotApproved.ContainsKey(transactionNumber))
+            {
+                State.AddLocalTransaction(new Transaction()
+                {
+                    Number = Convert.ToUInt16(State.Transactions.Count + 1),
+                    Time = Tools.GetUnixTimestamp(DateTime.Now),
+                    From = "00",
+                    To = User,
+                    Approved = true,
+                    ApproveTransaction = transactionNumber
+                });
+
+                State.TransactionsNotApproved.Remove(transactionNumber);
+            }
         }
     }
 }

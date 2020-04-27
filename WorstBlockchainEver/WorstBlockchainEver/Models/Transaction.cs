@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace WorstBlockchainEver.Models
+﻿namespace WorstBlockchainEver.Models
 {
     public class Transaction
     {
@@ -15,5 +9,9 @@ namespace WorstBlockchainEver.Models
         public string From { get; set; }
 
         public string To { get; set; }
+
+        public bool Approved { get; set; }
+
+        public ushort ApproveTransaction { get; set; }
     }
 }

@@ -21,7 +21,9 @@ namespace WorstBlockchainEver
                             Number = Convert.ToUInt16(args[0]),
                             Time = Convert.ToInt64(args[1]),
                             From = args[2],
-                            To = args[3]
+                            To = args[3],
+                            Approved = Convert.ToBoolean(args[4]),
+                            ApproveTransaction = Convert.ToUInt16(args[5])
                         });
                         break;
                     }
@@ -132,6 +134,8 @@ namespace WorstBlockchainEver
                 .Concat(Tools.Encode(transaction.From))
                 .Concat(Tools.Encode(transaction.To))
                 .Concat(Tools.Encode((int)transaction.Time))
+                .Append(Tools.Encode(transaction.Approved))
+                .Concat(Tools.Encode(transaction.ApproveTransaction))
                 .ToArray();
         }
 
@@ -192,13 +196,21 @@ namespace WorstBlockchainEver
                     var time = Tools.DecodeInt32(dataToProcess.GetRange(index, 4).ToArray());
                     index += 4;
 
+                    var approved = Tools.DecodeBoolean(dataToProcess[index]);
+                    index += 1;
+
+                    var approveTransaction = Tools.DecodeUInt16(dataToProcess.GetRange(index, 2).ToArray());
+                    index += 2;
+
                     // Add transaction to local transaction chain
                     Client.State.AddNetworkTransaction(new Transaction()
                     {
                         Number = number,
                         Time = time,
                         From = from,
-                        To = to
+                        To = to,
+                        Approved = approved,
+                        ApproveTransaction = approveTransaction
                     });
 
                     // Broadcast an ok message

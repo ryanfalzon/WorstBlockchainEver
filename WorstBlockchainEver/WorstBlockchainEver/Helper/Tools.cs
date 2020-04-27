@@ -28,6 +28,11 @@ namespace WorstBlockchainEver.Helper
             return BitConverter.GetBytes(IPAddress.HostToNetworkOrder((short)data));
         }
 
+        public static byte Encode(bool data)
+        {
+            return data ? (byte)1 : (byte)0;
+        }
+
         public static string DecodeString(byte[] data)
         {
             return Encoding.ASCII.GetString(data);
@@ -46,6 +51,11 @@ namespace WorstBlockchainEver.Helper
         public static ushort DecodeUInt16(byte[] data)
         {
             return (ushort)IPAddress.NetworkToHostOrder((short)BitConverter.ToUInt16(data, 0));
+        }
+
+        public static bool DecodeBoolean(byte data)
+        {
+            return data == 1 ? true : false;
         }
 
         public static int GenerateAwaitTime(int minimum, int maximum)
