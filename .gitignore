@@ -4,3 +4,5 @@
 
 /WorstBlockchainEver/.vs/WorstBlockchainEver/v16
 /.vs
+/VirtualMachine/.idea
+/VirtualMachine/out/production/VirtualMachine/com/virtualmachine
