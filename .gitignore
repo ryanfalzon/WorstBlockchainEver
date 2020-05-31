@@ -6,3 +6,6 @@
 /.vs
 /VirtualMachine/.idea
 /VirtualMachine/out/production/VirtualMachine/com/virtualmachine
+/WorstBlockchainEver/packages
+/WorstBlockchainEver/SlightlyBetterBlockchain/bin/Debug
+/WorstBlockchainEver/SlightlyBetterBlockchain/obj/Debug
