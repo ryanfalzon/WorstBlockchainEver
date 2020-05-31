@@ -5,6 +5,11 @@ using System.Threading.Tasks;
 
 namespace SlightlyBetterBlockchain
 {
+    /* Problems with current implementation
+     *  - Everytime the client is started, a differnt public and private key pair are generated
+     *  - No way to communicate with other nodes in the network
+     *  - COnfirmation block not yet implemeted
+     */
     public class Client
     {
         public static Wallet Wallet { get; set; }
