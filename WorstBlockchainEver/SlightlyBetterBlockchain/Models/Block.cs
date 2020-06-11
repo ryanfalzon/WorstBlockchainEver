@@ -5,8 +5,10 @@ namespace SlightlyBetterBlockchain.Models
 {
     public class Block
     {
+        [JsonProperty("hashedContent")]
         public HashedContent HashedContent { get; set; }
 
+        [JsonProperty("hash")]
         public string Hash { get; set; }
 
         private void IncreaseNonce()

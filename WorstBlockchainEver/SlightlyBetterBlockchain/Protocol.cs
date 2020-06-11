@@ -268,7 +268,7 @@ namespace SlightlyBetterBlockchain
                     Client.State = States.GetBlocks;
 
                     // Enqueue all missing blocks in a concurrent queue
-                    Client.Chain.Temporary = new ConcurrentBag<Block>();
+                    Client.Chain.Temporary = new List<Block>();
                     foreach (var hash in @object.Hashes)
                     {
                         if(!Client.Chain.Blocks.Exists(block => block.Hash.Equals(hash)))
@@ -331,7 +331,7 @@ namespace SlightlyBetterBlockchain
                 else
                 {
                     // Merge temporary chain with main chain
-
+                    Client.Chain.MergeTempChain();
                     Client.State = States.Mining;
                 }
             }

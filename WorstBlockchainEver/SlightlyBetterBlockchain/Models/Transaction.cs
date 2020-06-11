@@ -5,10 +5,13 @@ namespace SlightlyBetterBlockchain.Models
 {
     public class Transaction
     {
+        [JsonProperty("from")]
         public string From { get; set; }
 
+        [JsonProperty("to")]
         public string To { get; set; }
 
+        [JsonProperty("hash")]
         public string Hash { get; set; }
 
         public void CalculateHash()
