@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using SlightlyBetterBlockchain.Helper;
 using SlightlyBetterBlockchain.Models;
+using SlightlyBetterBlockchain.Models.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -34,6 +35,8 @@ namespace SlightlyBetterBlockchain
         {
             while (true)
             {
+                StateAwaiter.Await(States.Mining);
+
                 // Construct block
                 Block block = new Block()
                 {

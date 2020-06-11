@@ -1,6 +1,8 @@
 ﻿using SlightlyBetterBlockchain.Helper;
 using SlightlyBetterBlockchain.Models;
+using SlightlyBetterBlockchain.Models.Enums;
 using System;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace SlightlyBetterBlockchain
@@ -18,6 +20,10 @@ namespace SlightlyBetterBlockchain
 
         public static Miner Miner { get; set; }
 
+        public static States State { get; set; }
+
+        public static Peers Peers { get; set; }
+
         public static void Main(string[] args)
         {
             Tools.AllowLogs = true;
@@ -30,6 +36,29 @@ namespace SlightlyBetterBlockchain
 
             // Create miner object
             Client.Miner = new Miner();
+
+            // Initialize client state
+            Client.State = States.Mining;
+
+            // Initialize peers
+            Client.Peers = new Peers(new Node()
+            {
+                IPAddress = IPAddress.Parse(args[0]),
+                Port = Convert.ToInt32(args[1])
+            });
+            Client.Peers.InitPeers();
+
+            // Open a new thread to process incoming messages
+            Task processIncomingMessages = Task.Factory.StartNew(() =>
+            {
+                Client.Peers.ProcessIncomingMessages();
+            });
+
+            // Open a new thread to broadcast messages from queue
+            Task broadcastMessages = Task.Factory.StartNew(() =>
+            {
+                Client.Peers.BroadcastMessages();
+            });
 
             // Start mining process thread
             Task mining = Task.Factory.StartNew(() =>
@@ -45,7 +74,7 @@ namespace SlightlyBetterBlockchain
 
             Tools.Log($"Client setup completed!");
 
-            Task.WaitAll(mining, userActions);
+            Task.WaitAll(processIncomingMessages, broadcastMessages, mining, userActions);
         }
 
         public static void HandleUserActions()

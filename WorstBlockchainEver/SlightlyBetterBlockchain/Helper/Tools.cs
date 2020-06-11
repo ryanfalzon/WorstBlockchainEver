@@ -23,6 +23,11 @@ namespace SlightlyBetterBlockchain.Helper
             }
         }
 
+        public static byte EncodeChar(char data)
+        {
+            return Convert.ToByte(data);
+        }
+
         public static byte[] EncodeAscii(string data)
         {
             return Encoding.ASCII.GetBytes(data);

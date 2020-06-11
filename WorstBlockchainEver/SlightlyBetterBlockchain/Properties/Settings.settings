@@ -11,5 +11,8 @@
     <Setting Name="MiningDelay" Type="System.Int32" Scope="Application">
       <Value Profile="(Default)">10000</Value>
     </Setting>
+    <Setting Name="LocalDevelopment" Type="System.Boolean" Scope="Application">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
   </Settings>
 </SettingsFile>
