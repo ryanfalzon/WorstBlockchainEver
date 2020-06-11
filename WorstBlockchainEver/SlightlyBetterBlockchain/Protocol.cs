@@ -4,9 +4,10 @@ using SlightlyBetterBlockchain.Models;
 using SlightlyBetterBlockchain.Models.Enums;
 using SlightlyBetterBlockchain.Models.ProtocolObjects;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace SlightlyBetterBlockchain
 {
@@ -63,8 +64,8 @@ namespace SlightlyBetterBlockchain
             }
 
             // Return the whole message byte array
-            return new byte[Tools.EncodeChar('2')]
-                .Concat(Tools.Encode(Convert.ToInt16(commandBytes.Length)))
+            return new byte[] { Tools.EncodeChar('2') }
+                .Concat(Tools.Encode(Convert.ToUInt16(commandBytes.Length)))
                 .Concat(commandBytes)
                 .Append(Tools.EncodeChar('3'))
                 .ToArray();
@@ -82,8 +83,8 @@ namespace SlightlyBetterBlockchain
                 {
                     index++;
 
-                    var commandLength = (int)dataToProcess.GetRange(index, 1).FirstOrDefault();
-                    index++;
+                    var commandLength = Tools.DecodeUInt16(dataToProcess.GetRange(index, 2).ToArray());
+                    index += 2;
 
                     var command = dataToProcess.GetRange(index, commandLength);
                     index += commandLength;
@@ -92,24 +93,27 @@ namespace SlightlyBetterBlockchain
                     if (Tools.DecodeString(dataToProcess.GetRange(index, 1).ToArray()).Equals("3"))
                     {
                         // Decode the first element of the command byte array to deduce what command it is
-                        switch (Tools.DecodeString(command.GetRange(0, 1).ToArray()))
+                        Task.Factory.StartNew(() =>
                         {
-                            case "a": ProcessGetCountMessage(); break;
+                            switch (Tools.DecodeString(command.GetRange(0, 1).ToArray()))
+                            {
+                                case "a": ProcessGetCountMessage(); break;
 
-                            case "c": ProcessCountMessage(command.GetRange(1, commandLength - 2).ToArray()); break;
+                                case "c": ProcessCountMessage(command.GetRange(1, commandLength - 1).ToArray()); break;
 
-                            case "b": ProcessGetBlockHashesMessage(); break;
+                                case "b": ProcessGetBlockHashesMessage(); break;
 
-                            case "h": ProcessBlockHashesMessage(command.GetRange(1, commandLength - 2).ToArray()); break;
+                                case "h": ProcessBlockHashesMessage(command.GetRange(1, commandLength - 1).ToArray()); break;
 
-                            case "r": ProcessRequestBlockMessage(command.GetRange(1, commandLength - 2).ToArray()); break;
+                                case "r": ProcessRequestBlockMessage(command.GetRange(1, commandLength - 1).ToArray()); break;
 
-                            case "x": ProcessBlockMessage(command.GetRange(1, commandLength - 2).ToArray()); break;
+                                case "x": ProcessBlockMessage(command.GetRange(1, commandLength - 1).ToArray()); break;
 
-                            case "z": ProcessNewBlockMessage(command.GetRange(1, commandLength - 2).ToArray()); break;
+                                case "z": ProcessNewBlockMessage(command.GetRange(1, commandLength - 1).ToArray()); break;
 
-                            default: throw new InvalidOperationException("Invalid command received!");
-                        }
+                                default: throw new InvalidOperationException("Invalid command received!");
+                            }
+                        });
                     }
                     else
                     {
@@ -131,7 +135,7 @@ namespace SlightlyBetterBlockchain
 
         private static byte[] GetCountMessage()
         {
-            return new byte[OperationIdentifiers.GetCount]
+            return new byte[] { OperationIdentifiers.GetCount }
                 .Concat(Tools.EncodeAscii(string.Empty))
                 .ToArray();
         }
@@ -143,14 +147,14 @@ namespace SlightlyBetterBlockchain
                 Blocks = Client.Chain.Blocks.Count
             };
 
-            return new byte[OperationIdentifiers.Count]
+            return new byte[] { OperationIdentifiers.Count }
                 .Concat(Tools.EncodeAscii(JsonConvert.SerializeObject(@object)))
                 .ToArray();
         }
 
         private static byte[] GetBlockHashesMessage()
         {
-            return new byte[OperationIdentifiers.GetBlockHashes]
+            return new byte[] { OperationIdentifiers.GetBlockHashes }
                 .Concat(Tools.EncodeAscii(string.Empty))
                 .ToArray();
         }
@@ -162,7 +166,7 @@ namespace SlightlyBetterBlockchain
                 Hashes = Client.Chain.Blocks.Select(block => block.Hash).ToList()
             };
 
-            return new byte[OperationIdentifiers.BlockHashes]
+            return new byte[] { OperationIdentifiers.BlockHashes }
                 .Concat(Tools.EncodeAscii(JsonConvert.SerializeObject(@object)))
                 .ToArray();
         }
@@ -174,7 +178,7 @@ namespace SlightlyBetterBlockchain
                 Hash = hash
             };
 
-            return new byte[OperationIdentifiers.RequestBlock]
+            return new byte[] { OperationIdentifiers.RequestBlock }
                 .Concat(Tools.EncodeAscii(JsonConvert.SerializeObject(@object)))
                 .ToArray();
         }
@@ -186,7 +190,7 @@ namespace SlightlyBetterBlockchain
                 Block = block
             };
 
-            return new byte[OperationIdentifiers.Block]
+            return new byte[] { OperationIdentifiers.Block }
                 .Concat(Tools.EncodeAscii(JsonConvert.SerializeObject(@object)))
                 .ToArray();
         }
@@ -198,7 +202,7 @@ namespace SlightlyBetterBlockchain
                 Block = block
             };
 
-            return new byte[OperationIdentifiers.NewBlock]
+            return new byte[] { OperationIdentifiers.NewBlock }
                 .Concat(Tools.EncodeAscii(JsonConvert.SerializeObject(@object)))
                 .ToArray();
         }
@@ -211,13 +215,15 @@ namespace SlightlyBetterBlockchain
         {
             StateAwaiter.Await(States.Mining);
 
+            Tools.Log("Processing get count message...");
+
             try
             {
                 Client.Peers.Messages.Enqueue(CreateMessage(Commands.Count));
             }
             catch(Exception e)
             {
-                Tools.Log(e.Message);
+                Tools.Log($"Error while processing get count message...\n{e.Message}");
             }
         }
 
@@ -225,12 +231,14 @@ namespace SlightlyBetterBlockchain
         {
             StateAwaiter.Await(States.Mining);
 
+            Tools.Log("Processing count message...");
+
             try
             {
                 CountObject @object = JsonConvert.DeserializeObject<CountObject>(Tools.DecodeString(data));
 
                 // Check if block count is greater than local chain length
-                if(Client.Chain.Blocks.Count > @object.Blocks)
+                if(Client.Chain.Blocks.Count < @object.Blocks)
                 {
                     Client.State = States.GetBlockHashes;
                     Client.Peers.Messages.Enqueue(CreateMessage(Commands.GetBlockHashes));
@@ -238,7 +246,7 @@ namespace SlightlyBetterBlockchain
             }
             catch (Exception e)
             {
-                Tools.Log(e.Message);
+                Tools.Log($"Error while processing count message...\n{e.Message}");
             }
         }
 
@@ -246,19 +254,23 @@ namespace SlightlyBetterBlockchain
         {
             StateAwaiter.Await(States.Mining);
 
+            Tools.Log("Processing get block hashes message...");
+
             try
             {
                 Client.Peers.Messages.Enqueue(CreateMessage(Commands.BlockHashes));
             }
             catch (Exception e)
             {
-                Tools.Log(e.Message);
+                Tools.Log($"Error while processing get block hashes message...\n{e.Message}");
             }
         }
 
         private static void ProcessBlockHashesMessage(byte[] data)
         {
             StateAwaiter.Await(States.GetBlockHashes);
+
+            Tools.Log("Processing block hashes message...");
 
             try
             {
@@ -286,13 +298,15 @@ namespace SlightlyBetterBlockchain
             }
             catch (Exception e)
             {
-                Tools.Log(e.Message);
+                Tools.Log($"Error while processing block hashes message...\n{e.Message}");
             }
         }
 
         private static void ProcessRequestBlockMessage(byte[] data)
         {
             StateAwaiter.Await(States.Mining);
+
+            Tools.Log("Processing request block message...");
 
             try
             {
@@ -304,13 +318,15 @@ namespace SlightlyBetterBlockchain
             }
             catch (Exception e)
             {
-                Tools.Log(e.Message);
+                Tools.Log($"Error while processing request block message...\n{e.Message}");
             }
         }
 
         private static void ProcessBlockMessage(byte[] data)
         {
             StateAwaiter.Await(States.GetBlocks);
+
+            Tools.Log("Processing block message...");
 
             try
             {
@@ -337,7 +353,7 @@ namespace SlightlyBetterBlockchain
             }
             catch (Exception e)
             {
-                Tools.Log(e.Message);
+                Tools.Log($"Error while processing block message...\n{e.Message}");
             }
         }
 
@@ -345,14 +361,23 @@ namespace SlightlyBetterBlockchain
         {
             StateAwaiter.Await(States.Mining);
 
+            Tools.Log("Processing new block message...");
+
             try
             {
                 NewBlockObject @object = JsonConvert.DeserializeObject<NewBlockObject>(Tools.DecodeString(data));
-                Client.Chain.AddBlock(@object.Block);
+                if (Client.Chain.CurrentBlock == null || Client.Chain.CurrentBlock.Hash.Equals(@object.Block.HashedContent.PreviousBlockHash))
+                {
+                    Client.Chain.AddBlock(@object.Block);
+                }
+                else
+                {
+                    Tools.Log("Rejecting received block since previous block hash does not match current block hash!");
+                }
             }
             catch (Exception e)
             {
-                Tools.Log(e.Message);
+                Tools.Log($"Error while processing new block message...\n{e.Message}");
             }
         }
 

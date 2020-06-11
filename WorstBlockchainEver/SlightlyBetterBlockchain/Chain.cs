@@ -32,6 +32,7 @@ namespace SlightlyBetterBlockchain
         {
             try
             {
+                Tools.Log($"Adding block with hash {block.Hash} to local chain...");
                 this.Blocks.Add(block);
                 this.CurrentBlock = block;
 
@@ -39,7 +40,7 @@ namespace SlightlyBetterBlockchain
             }
             catch(Exception e)
             {
-                Tools.Log($"An error occured while adding block!\n{e.Message}");
+                Tools.Log($"An error occured while adding block with has {block.Hash}!\n{e.Message}");
                 return false;
             }
         }
@@ -48,9 +49,10 @@ namespace SlightlyBetterBlockchain
         {
             // If can be added to main chain add it, or else add to temporary chain
             var previousBlock = Blocks.Where(b => b.Hash.Equals(block.HashedContent.PreviousBlockHash)).FirstOrDefault();
-            if (previousBlock != null)
+            if (previousBlock != null || (CurrentBlock == null && block.HashedContent.PreviousBlockHash.Equals(string.Empty)))
             {
                 Blocks.Insert(Blocks.IndexOf(previousBlock) + 1, block);
+                CurrentBlock = Blocks.LastOrDefault();
                 return true;
             }
             else

@@ -33,51 +33,70 @@ namespace SlightlyBetterBlockchain
 
         public void Run()
         {
+            var initTx = new Transaction()
+            {
+                To = Client.Wallet.GetPublicKey(),
+                From = "00"
+            };
+            initTx.CalculateHash();
+
+            this.MiningPool.Add(initTx);
+
             while (true)
             {
                 StateAwaiter.Await(States.Mining);
 
-                // Construct block
-                Block block = new Block()
-                {
-                    HashedContent = new HashedContent()
-                    {
-                        PreviousBlockHash = Client.Chain.CurrentBlock != null ? Client.Chain.CurrentBlock.Hash : string.Empty,
-                        Timestamp = Tools.GetUnixTimestamp(DateTime.Now),
-                        Nonce = 0
-                    }
-                };
+                // Request block count
+                Client.Peers.Messages.Enqueue(Protocol.CreateMessage(Commands.GetCount));
+                Thread.Sleep(Properties.Settings.Default.MiningDelay);
+
+                StateAwaiter.Await(States.Mining);
 
                 // Fill up block with transactions
-                List<Transaction> transactions = new List<Transaction>();
-                if(this.MiningPool.Count > 0)
+                if (this.MiningPool.Count > 0)
                 {
+                    // Construct block
+                    Block block = new Block()
+                    {
+                        HashedContent = new HashedContent()
+                        {
+                            PreviousBlockHash = Client.Chain.CurrentBlock != null ? Client.Chain.CurrentBlock.Hash : string.Empty,
+                            Timestamp = Tools.GetUnixTimestamp(DateTime.Now),
+                            Nonce = 0
+                        }
+                    };
+
+                    List<Transaction> transactions = new List<Transaction>();
+
                     int i = 0;
                     while((transactions.Count <= this.BlockSize) && (i < this.MiningPool.Count))
                     {
                         transactions.Add(this.MiningPool[i]);
                         i++;
                     }
+
+                    block.HashedContent.Transactions = transactions;
+
+                    // Add coinbase transaction
+                    var coinbaseTransaction = new Transaction()
+                    {
+                        To = Client.Wallet.GetPublicKey(),
+                        From = "00"
+                    };
+                    coinbaseTransaction.CalculateHash();
+                    block.HashedContent.Transactions.Insert(0, coinbaseTransaction);
+
+                    // Find the hash of the block
+                    block.CalculateHash(this.DifficultyString);
+                    Tools.Log($"Block Found [{block.Hash}]");
+                    Tools.Log($"{JsonConvert.SerializeObject(block)}\n");
+
+                    // Add new block to chain
+                    Client.Chain.AddBlock(block);
+                    ClearMiningPool(transactions);
+
+                    Client.Peers.Messages.Enqueue(Protocol.CreateMessage(Commands.NewBlock, block));
                 }
-                block.HashedContent.Transactions = transactions;
-
-                // Add coinbase transaction
-                var coinbaseTransaction = new Transaction()
-                {
-                    To = Client.Wallet.GetPublicKey(),
-                    From = "00"
-                };
-                coinbaseTransaction.CalculateHash();
-                block.HashedContent.Transactions.Insert(0, coinbaseTransaction);
-
-                // Find the hash of the block
-                block.CalculateHash(this.DifficultyString);
-                Tools.Log($"Block Found [{block.Hash}]");
-                Tools.Log($"{JsonConvert.SerializeObject(block)}\n");
-
-                // Add new block to chain
-                Client.Chain.AddBlock(block);
-                ClearMiningPool(transactions);
 
                 Thread.Sleep(Properties.Settings.Default.MiningDelay);
             }

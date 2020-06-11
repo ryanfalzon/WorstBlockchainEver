@@ -63,6 +63,11 @@ namespace SlightlyBetterBlockchain.Helper
             return Encoding.ASCII.GetString(data);
         }
 
+        public static short DecodeInt16(byte[] data)
+        {
+            return IPAddress.NetworkToHostOrder(BitConverter.ToInt16(data, 0));
+        }
+
         public static long DecodeInt32(byte[] data)
         {
             return IPAddress.NetworkToHostOrder(BitConverter.ToInt32(data, 0));
